@@ -136,11 +136,15 @@ EXTERNAL_IP=$(docker-machine ls | grep kube | grep node | awk '{print $5}' | gre
 
 INTERNAL_IP=$(docker-machine ls | grep kube | grep node | awk '{print $5}' | grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}')
 
+THEHOST="${instance},$(echo ${EXTERNAL_IP}${INTERNAL_IP}|sed 's/ /,/g')"
+
+echo $THEHOST
+
 cfssl gencert \
   -ca=ca.pem \
   -ca-key=ca-key.pem \
   -config=ca-config.json \
-  -hostname=${instance},${EXTERNAL_IP},${INTERNAL_IP} \
+  -hostname=$THEHOST \
   -profile=kubernetes \
   ${instance}-csr.json | cfssljson -bare ${instance}
 done
