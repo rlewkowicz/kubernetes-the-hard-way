@@ -132,9 +132,9 @@ cat > ${instance}-csr.json <<EOF
 }
 EOF
 
-EXTERNAL_IP=$(docker-machine ls | grep kube | grep node | awk '{print $5}' | grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}')
+EXTERNAL_IP=$(docker-machine ls | grep kube | awk '{print $5}' | grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}')
 
-INTERNAL_IP=$(docker-machine ls | grep kube | grep node | awk '{print $5}' | grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}')
+INTERNAL_IP=$(docker-machine ls | grep kube | awk '{print $5}' | grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}')
 
 THEHOST="${instance},$(echo ${EXTERNAL_IP}${INTERNAL_IP}|sed 's/ /,/g')"
 
@@ -301,9 +301,11 @@ Generate the Kubernetes API Server certificate and private key:
 ```
 {
 
-KUBERNETES_PUBLIC_ADDRESS=$(gcloud compute addresses describe kubernetes-the-hard-way \
-  --region $(gcloud config get-value compute/region) \
-  --format 'value(address)')
+EXTERNAL_IP=$(docker-machine ls | grep kube | awk '{print $5}' | grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}')
+
+INTERNAL_IP=$(docker-machine ls | grep kube | awk '{print $5}' | grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}')
+
+THEHOST="${instance},$(echo ${EXTERNAL_IP}${INTERNAL_IP}|sed 's/ /,/g')"
 
 cat > kubernetes-csr.json <<EOF
 {
@@ -328,7 +330,7 @@ cfssl gencert \
   -ca=ca.pem \
   -ca-key=ca-key.pem \
   -config=ca-config.json \
-  -hostname=10.32.0.1,10.240.0.10,10.240.0.11,10.240.0.12,${KUBERNETES_PUBLIC_ADDRESS},127.0.0.1,kubernetes.default \
+  -hostname=10.32.0.1,10.240.0.10,10.240.0.11,10.240.0.12,${THEHOST},127.0.0.1,kubernetes.default \
   -profile=kubernetes \
   kubernetes-csr.json | cfssljson -bare kubernetes
 
